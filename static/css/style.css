@@ -1,0 +1,21 @@
+form input {
+    background-color: black;
+    color: rgb(0, 255, 30);
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+form label {
+    display: none;
+}
+
+
+.custom-input {
+    width: 50%;
+
+}
+
+body {
+    background: url("/static/pics/intro.gif") no-repeat center center fixed;
+    background-size: cover;
+}

@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>District Champion</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/buttons.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+    .hidden-ball-button {
+        position: absolute;
+        top: 40%;  /* Adjust depending on actual position of the ball */
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 150px;  /* Adjust to fit ball size */
+        height: 150px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 10;
+    }
+    </style>
+</head>
+<body style="background: url('/static/pics/dashboard.gif') no-repeat center center fixed; background-size: cover;">
+
+    <a href="{% url 'game' %}" class="hidden-ball-button"></a>
+
+
+</body>
+</html>
+
+
