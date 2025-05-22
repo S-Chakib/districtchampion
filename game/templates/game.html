@@ -1,24 +1,89 @@
 {% load static %}
+{% load dict_utils %}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>District Champion</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/buttons.css' %}">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-dark">
-    <div style="position: relative; height: 100vh; width: 100vw;">
-    <img src="{% static 'pics/game2.jpg' %}" alt="Background"
-         style="
+    <style>
+        body {
+            background-color: #212529;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .image-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 90vw;
+            
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 30px;
+        }
+
+        .card-absolute {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 100%;
-            max-height: 100%;
-        ">
-</div>
+            width: 80px;
+            height: 60px;
+            font-size: 12px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="d-flex justify-content-center align-items-center vh-100">
+    <div class="image-wrapper" id="imageWrapper">
+        <!-- Background Image -->
+        <img src="{% static 'pics/_dc_playf_2.png' %}" id="gameImage" alt="Game Background">
+
+        <!-- Cards -->
+        {% for i in card_range %}
+            {% with card=card_positions|get_item:i %}
+                <div class="card card-absolute text-center"
+                     data-top="{{ card.top }}" data-left="{{ card.left }}" id="card-{{ i }}">
+                    <div class="card-body p-1">
+                        <small>Card {{ i|add:1 }}</small>
+                    </div>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+
+    <script>
+        function positionCards() {
+            const wrapper = document.getElementById('imageWrapper');
+            const img = document.getElementById('gameImage');
+            const cards = document.querySelectorAll('.card-absolute');
+
+            const wrapperRect = wrapper.getBoundingClientRect();
+
+            cards.forEach(card => {
+                const topPercent = parseFloat(card.dataset.top);
+                const leftPercent = parseFloat(card.dataset.left);
+
+                // Set position relative to image's actual rendered size
+                const topPx = (img.clientHeight * topPercent) / 100;
+                const leftPx = (img.clientWidth * leftPercent) / 100;
+
+                card.style.top = `${topPx}px`;
+                card.style.left = `${leftPx}px`;
+            });
+        }
+
+        // Ensure the image is loaded before positioning
+        const img = document.getElementById('gameImage');
+        if (img.complete) {
+            positionCards();
+        } else {
+            img.onload = positionCards;
+        }
+        window.addEventListener('resize', positionCards);
+    </script>
 </body>
 </html>
