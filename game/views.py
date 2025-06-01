@@ -12,16 +12,16 @@ def game(request):
     players = [
         SimpleNamespace(name = "AAA", type = 'Player', points = 100, prop_1='middle'),
         SimpleNamespace(name = "BBB", type = 'Player', points = 80, prop_1='middle'),
-        SimpleNamespace(name = "CCC", type = 'Player', points = 120, prop_1='attacking'),
+        SimpleNamespace(name = "CCC", type = 'Player', points = 120, prop_1='attack'),
         SimpleNamespace(name = "DDD", type = 'Player', points = 70, prop_1='middle'),
-        SimpleNamespace(name = "EEE", type = 'Player', points = 100, prop_1='defining'),
-        SimpleNamespace(name = "FFF", type = 'Player', points = 99, prop_1='attacking'),
+        SimpleNamespace(name = "EEE", type = 'Player', points = 100, prop_1='attack'),
+        SimpleNamespace(name = "FFF", type = 'Player', points = 99, prop_1='attack'),
     ]
 
     left_map = {
-        'defining': 21,
+        'defend': 21,
         'middle': 30,
-        'attacking': 40
+        'attack': 40
     }
 
     base_top = 30
