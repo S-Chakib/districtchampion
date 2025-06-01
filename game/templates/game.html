@@ -31,7 +31,7 @@
         .card-absolute {
             position: absolute;
             width: 80px;
-            height: 60px;
+            
             font-size: 12px;
             z-index: 10;
         }
@@ -43,16 +43,23 @@
         <img src="{% static 'pics/_dc_playf_2.png' %}" id="gameImage" alt="Game Background">
 
         <!-- Cards -->
-        {% for i in card_range %}
-            {% with card=card_positions|get_item:i %}
-                <div class="card card-absolute text-center"
-                     data-top="{{ card.top }}" data-left="{{ card.left }}" id="card-{{ i }}">
-                    <div class="card-body p-1">
-                        <small>Card {{ i|add:1 }}</small>
-                    </div>
+{% for card in cards %}
+    {% with i=forloop.counter0 %}
+        {% with position=card_positions|get_item:i %}
+            <div class="card card-absolute text-center"
+                 data-top="{{ position.top }}" data-left="{{ position.left }}" id="card-{{ i }}">
+                <div class="card-body p-1">
+                    <strong>{{ card.name }}</strong><br>
+                    <small>Type: {{ card.type }}</small><br>
+                    <small>Points: {{ card.points|default:"N/A" }}</small>
+                    <small>Position : {{card.prop_1}}</small>
                 </div>
-            {% endwith %}
-        {% endfor %}
+            </div>
+        {% endwith %}
+    {% endwith %}
+{% endfor %}
+
+
     </div>
 
     <script>

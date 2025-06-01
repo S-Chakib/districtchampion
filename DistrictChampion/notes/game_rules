@@ -1,0 +1,22 @@
+Cards can be "player" cards or "extra" cards 
+
+Every Player takes 23 cards (from all his available/collected cards)
+    1x      Take Trainer - and put in the Trainer slot
+    14x     Player Cards
+    8x      Extre Cards
+
+    Take from cards 11 cards:
+    7x      Players
+    4x      extra
+
+    Rest of Extra cards and Players cards go to extra card/player slot
+
+    Start Play with the 11 cards
+    Position de player according to their skills (defending game column, middle game column, attacking game coliumn)
+
+    Extra card will be played on the player, for instance yellow "card - extra card" will remove 2 points to the assigned player
+
+    Weather cards will be be positioned in the weather card slot according their proprties
+
+    
+
