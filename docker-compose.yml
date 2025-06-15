@@ -15,8 +15,6 @@ services:
   celery:
     build: .
     command: celery -A DistrictChampion worker --loglevel=info
-    volumes:
-      - .:/app
     depends_on:
       - redis
     environment:
@@ -25,8 +23,6 @@ services:
   celery-beat:
     build: .
     command: celery -A DistrictChampion beat --loglevel=info
-    volumes:
-      - .:/app
     depends_on:
       - redis
     environment:
