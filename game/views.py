@@ -1,71 +1,100 @@
 from django.shortcuts import render
-from .models import Card
 from types import SimpleNamespace
-
-from types import SimpleNamespace
-from collections import defaultdict
 
 def game(request):
-    # Simulated cards
-    trainer = SimpleNamespace(name="Trainer", type="Trainer", points=None, prop_1=None)
-
-    players = [
-        SimpleNamespace(name = "AAA", type = 'Player', points = 100, prop_1='middle'),
-        SimpleNamespace(name = "BBB", type = 'Player', points = 80, prop_1='middle'),
-        SimpleNamespace(name = "CCC", type = 'Player', points = 120, prop_1='attack'),
-        SimpleNamespace(name = "DDD", type = 'Player', points = 70, prop_1='middle'),
-        SimpleNamespace(name = "EEE", type = 'Player', points = 100, prop_1='attack'),
-        SimpleNamespace(name = "FFF", type = 'Player', points = 99, prop_1='attack'),
+    # Team A (your team)
+    team_a = [
+        SimpleNamespace(name="Trainer A", type="Trainer", points=None, prop_1='trainer'),
+        SimpleNamespace(name="AAA", type="Player", points=100, prop_1='middle'),
+        SimpleNamespace(name="BBB", type="Player", points=80, prop_1='defend'),
+        SimpleNamespace(name="CCC", type="Player", points=120, prop_1='attack'),
+        SimpleNamespace(name="DDD", type="Player", points=70, prop_1='middle'),
+        SimpleNamespace(name="EEE", type="Player", points=100, prop_1='attack'),
+        SimpleNamespace(name="FFF", type="Player", points=99, prop_1='attack'),
     ]
 
-    left_map = {
+    left_map_a = {
+        'trainer': 10,
         'defend': 21,
         'middle': 30,
-        'attack': 40
+        'attack': 39,
     }
 
-    base_top = 30
-    vertical_spacing = 20  # Adjust this to control vertical space between stacked cards
+    # Team B (adversary team)
+    team_b = [
+        SimpleNamespace(name="Trainer B", type="Trainer", points=None, prop_1='trainer'),
+        SimpleNamespace(name="XXX", type="Player", points=95, prop_1='middle'),
+        SimpleNamespace(name="YYY", type="Player", points=85, prop_1='defend'),
+        SimpleNamespace(name="ZZZ", type="Player", points=105, prop_1='attack'),
+        SimpleNamespace(name="WWW", type="Player", points=90, prop_1='middle'),
+        SimpleNamespace(name="VVV", type="Player", points=100, prop_1='attack'),
+        SimpleNamespace(name="UUU", type="Player", points=98, prop_1='attack'),
+    ]
 
-    # Group by left positions
-    grouped_by_left = defaultdict(list)
-    for i, card in enumerate(players, start=1):
-        left = left_map.get(card.prop_1, 10)
-        grouped_by_left[left].append(i)
+    left_map_b = {
+        'trainer': 83,
+        'defend': 73,
+        'middle': 63,
+        'attack': 54,
+    }
 
-    card_positions = {0: {"top": 20, "left": 10}}  # Trainer card
+    # Team A (bottom team)
+    positions_a = compute_card_positions(
+        team_a,
+        left_map_a,
+        trainer_top=10,         # Trainer A near the top
+        player_base_top=27      # Players A stacked below trainer
+    )
 
-    # Assign top/left values, stacking vertically within each group
-    for left, indices in grouped_by_left.items():
-        for j, card_index in enumerate(indices):
-            top = base_top + j * vertical_spacing
-            card_positions[card_index] = {"top": top, "left": left}
+    # Team B (top team)
+    positions_b = compute_card_positions(
+        team_b,
+        left_map_b,
+        trainer_top=80,         # Trainer B near bottom
+        player_base_top=20      # Players B stacked above trainer
+    )
+    
+    # Offset team B index to avoid overlap in template (7+)
+    offset = len(team_a)
+    cards = team_a + team_b
+    card_positions = {}
 
-    cards =  [trainer] + players
+    for k, v in positions_a.items():
+        card_positions[k] = v
+
+    for k, v in positions_b.items():
+        card_positions[k + offset] = v  # shift B's indices
 
     return render(request, "game.html", {
-    "card_positions": card_positions,
-    "card_range": range(1, 7),  # Show only player cards (1 to 6)
-    "cards": cards,
-    
-})
+        "cards": cards,
+        "card_positions": card_positions,
+    })
 
+from collections import defaultdict
 
+def compute_card_positions(team, left_map, trainer_top=10, player_base_top=30):
+    """
+    Computes positions for a team with separate heights for trainer and players.
+    """
+    card_positions = {}
 
-
-
-
-
-
-    '''
-    card_positions = {
-    0: {"top": 20, "left": 10},
-    1: {"top": 35, "left": 10},
-    2: {"top": 38, "left": 8},
-    3: {"top": 52, "left": 10},
-    4: {"top": 55, "left": 8},
-    5: {"top": 73, "left": 10},
-
+    # 1. Trainer (always index 0)
+    card_positions[0] = {
+        "top": trainer_top,
+        "left": left_map.get(team[0].prop_1, 10)
     }
-    '''
-    
+
+    # 2. Players (from index 1 on)
+    vertical_spacing = 20
+    grouped_by_left = defaultdict(list)
+
+    for i, player in enumerate(team[1:], start=1):
+        left = left_map.get(player.prop_1, 10)
+        grouped_by_left[left].append(i)
+
+    for left, indices in grouped_by_left.items():
+        for j, idx in enumerate(indices):
+            top = player_base_top + j * vertical_spacing
+            card_positions[idx] = {"top": top, "left": left}
+
+    return card_positions
