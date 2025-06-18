@@ -16,7 +16,7 @@ services:
   celery:
     build: .
     command: celery -A DistrictChampion worker --loglevel=info
-    volumes:                # ✅ MISSING BEFORE
+    volumes:               
       - .:/app
     depends_on:
       - redis
