@@ -19,6 +19,8 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from . import views
 from .forms import CustomLoginForm
+from game import urls as game_urls
+from players import urls as players_urls
 
 
 urlpatterns = [
@@ -29,4 +31,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('game/', include('game.urls')),
+    path('players/', include(players_urls)),
 ]

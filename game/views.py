@@ -12,7 +12,7 @@ def game(request):
         }
 
     team_a = [
-        SimpleNamespace(name="Cristiano Ronaldo", type="Player", points=100, prop_1='Attack', pic='/pics/cr.jpg'),
+        SimpleNamespace(name="Cristiano Ronaldo", type="Player", points=100, prop_1='defend', pic='/pics/cr.jpg'),
         SimpleNamespace(name="BBB", type="Player", points=80, prop_1='defend', pic='/pics/standard.png'),
         SimpleNamespace(name="CCC", type="Player", points=120, prop_1='attack', pic='/pics/standard.png'),
         SimpleNamespace(name="DDD", type="Player", points=70, prop_1='middle', pic='/pics/standard.png'),

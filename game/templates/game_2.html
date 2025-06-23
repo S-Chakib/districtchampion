@@ -189,7 +189,7 @@
         mini.onclick = () => {
           const imagePath = player.pic ? player.pic.replace(/^\/\/+/, '') : 'pics/standard.jpg';
           document.getElementById('modalBody').innerHTML = `
-            <img src='${staticPrefix}${imagePath}' alt='Player Image' class='img-fluid rounded mb-3' style='height: 30vh;'>
+            <img src='${staticPrefix}${imagePath}' alt='Player Image' class='img-fluid rounded mb-3' style='height: 30vh; width: auto;'>
             <strong>Name:</strong> ${player.name}<br>
             <strong>Team:</strong> ${player.team}<br>
             <strong>Role:</strong> ${player.role}<br>
