@@ -8,59 +8,82 @@
 
 {% block content %}
 
-
-
-<!-- Left-side buttons for Team B -->
-<div class="team-buttons team-b-buttons position-absolute start-0 top-50 translate-middle-y">
-  {% for i in "1,2,3,4"|cut:"," %}
-    <img
-      src="{% static "pics/play_field/Team_A_"|add:i|add:".png" %}"
-      class="team-button-img mb-2"
-      data-team="A"
-      data-index="{{ i }}"
-    >
-  {% endfor %}
+<!-- Control Buttons -->
+<div class="playing-buttons">
+  <div class="d-flex justify-content-center mt-3 gap-3">
+    <button id="chooseCardBtn" class="btn btn-primary btn-sm">
+      Choose your card to play
+    </button>
+  </div>
 </div>
 
-<!-- Right-side buttons for Team A -->
-<div class="team-buttons team-a-buttons position-absolute end-0 top-50 translate-middle-y">
-  {% for i in "4,3,2,1"|cut:"," %}
-    <img
-      src="{% static "pics/play_field/Team_B_"|add:i|add:".png" %}"
-      class="team-button-img mb-2"
-      data-team="B"
-      data-index="{{ i }}"
-    >
-  {% endfor %}
-</div>
+<hr>
 
+<!-- Game Field -->
+<div class="playing-field position-relative alert alert-success">
 
+  <!-- Left-side Team B Buttons -->
+  <div class="team-buttons team-b-buttons">
+    {% for i in "1,2,3,4"|cut:"," %}
+      <img
+        src="{% static 'pics/play_field/Team_A_'|add:i|add:'.png' %}"
+        class="team-button-img"
+        data-team="A"
+        data-index="{{ i }}">
+    {% endfor %}
+  </div>
 
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="image-wrapper position-relative" id="imageWrapper">
-    <img src="{% static 'pics/_dc_playf_2.1.png' %}" id="gameImage" alt="Game Background">
-    {{ cards|json_script:"cards-data" }}
+  <!-- Right-side Team A Buttons -->
+  <div class="team-buttons team-a-buttons">
+    {% for i in "4,3,2,1"|cut:"," %}
+      <img
+        src="{% static 'pics/play_field/Team_B_'|add:i|add:'.png' %}"
+        class="team-button-img"
+        data-team="B"
+        data-index="{{ i }}">
+    {% endfor %}
+  </div>
 
+  <!-- Center Game Image & Modal -->
+  <div class="d-flex justify-content-center align-items-center">
+    <div class="image-wrapper position-relative" id="imageWrapper">
+      <img
+        src="{% static 'pics/_dc_playf_2.1.png' %}"
+        id="gameImage"
+        alt="Game Background">
 
+      
 
-
-    <!-- Modal -->
-    <div class="modal fade" id="playerModal" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content bg-dark text-white">
-          <div class="modal-header">
-            <h5 class="modal-title" id="playerModalLabel">Player Info</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      <!-- Player Info Modal -->
+      <div class="modal fade" id="playerModal" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+              <h5 class="modal-title" id="playerModalLabel">Player Info</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
           </div>
-          <div class="modal-body" id="modalBody"></div>
         </div>
       </div>
     </div>
   </div>
+
 </div>
 
-<script>
-  const staticPrefix = "{% static '' %}";
-</script>
-<script src="{% static 'javascript/game.js' %}"></script>
+
+{{ cards|json_script:"cards-data" }}
+
+<!-- Static Prefix Script -->
+<script>const staticPrefix = "{% static '' %}";</script>
+
+<script id="staticPrefix" type="text/plain">{% static '' %}</script>
+
+<!-- JS -->
+<script src="{% static 'javascript/game_field.js' %}"></script>
+
+
+
+
+
 {% endblock %}
