@@ -1,0 +1,24 @@
+{% extends "_base_.html" %}
+{% load static %}
+
+{% block content_head %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/buttons.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-start">
+    <a href="{% url 'home' %}"><img src="{% static 'pics/dc-logo.avif' %}" alt="Logo"></a>
+    <div style="margin:20px;">
+      <a href="{% url 'login' %}"><button class="bn632-hover bn18">Login To Play</button></a>
+      <a href="{% url 'signup' %}"><button class="bn632-hover bn18">Be The Next Champ</button></a>
+      <a href="{% url 'dashboard' %}"><button class="bn632-hover bn18">Already Logged In?</button></a>
+    </div>
+  </div>
+
+  <!-- Foreground content -->
+  <div class="container" style="position: relative; z-index: 2; padding-top: 50px;">
+    {% block content2 %}
+    {% endblock %}
+  </div>
+{% endblock %}

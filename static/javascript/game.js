@@ -1,125 +1,5 @@
-{% load static %}
-{% load dict_utils %}
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>District Champion</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #212529;
-      margin: 0;
-      overflow: hidden;
-    }
-
-    .image-wrapper {
-      position: relative;
-      display: inline-block;
-      max-width: 95vw;
-    }
-
-    .image-wrapper img {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 30px;
-    }
-
-    .main-card {
-      position: absolute;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 10%;
-      height: 90%;
-      display: flex;
-      flex-direction: column;
-      border: 2px solid white;
-      border-radius: 10px;
-      background-color: rgba(255, 255, 255, 0.3);
-      color: white;
-      overflow: hidden;
-    }
-
-    .main-card .card-header,
-    .main-card .card-footer {
-      padding: 0;
-      height: 2.5rem;
-    }
-
-    .main-card .card-body {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 0.3rem 0.2rem;
-      gap: 0.3rem;
-    }
-
-    .card-body.center-single {
-      justify-content: center;
-    }
-
-    .player-mini-card {
-      background: #1a1a1a;
-      border: 1px solid #444;
-      border-radius: 6px;
-      color: white;
-      font-size: 0.8rem;
-      padding: 0.3rem;
-      text-align: center;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.5);
-      cursor: pointer;
-    }
-
-    .player-mini-card .name {
-      font-weight: bold;
-    }
-
-    .player-mini-card .points {
-      font-size: 0.75rem;
-      color: #ccc;
-    }
-
-    .weather-btn {
-      background-size: cover;
-      background-position: center;
-      color: white;
-      border: none;
-      font-weight: bold;
-      width: 100%;
-      height: 100%;
-    }
-
-    .modal-content {
-      background-color: #343a40;
-      color: white;
-    }
-  </style>
-</head>
-<body class="d-flex justify-content-center align-items-center vh-100">
-<div class="image-wrapper position-relative" id="imageWrapper">
-  <img src="{% static 'pics/_dc_playf_2.1.png' %}" id="gameImage" alt="Game Background">
-  {{ cards|json_script:"cards-data" }}
-
-  <!-- Modal -->
-  <div class="modal fade" id="playerModal" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="playerModalLabel">Player Info</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" id="modalBody"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
     const cards = JSON.parse(document.getElementById('cards-data').textContent);
     const container = document.getElementById('imageWrapper');
-    const staticPrefix = "{% static '' %}";
 
     const grouped = {
       'A-defend': [], 'A-middle': [], 'A-attack': [],
@@ -159,12 +39,12 @@
 
       const weatherButton = document.createElement('button');
       weatherButton.className = 'weather-btn';
-      weatherButton.style.backgroundImage = `url('${staticPrefix}pics/Team_${key[0]}_Weather.png')`;
+      weatherButton.style.backgroundImage = `url('${staticPrefix}pics/play_field/Team_${key[0]}_Weather.png')`;
       weatherButton.onclick = () => alert(`Clicked Weather ${weatherIndex} ${team}`);
 
       const header = document.createElement('div');
       header.className = 'card-header';
-      if (key[0] === 'A') header.appendChild(weatherButton);
+      if (key[0] === 'B') header.appendChild(weatherButton);
       else header.textContent = key.toUpperCase().replace('-', ' - ');
 
       const body = document.createElement('div');
@@ -204,10 +84,10 @@
 
       const footer = document.createElement('div');
       footer.className = 'card-footer';
-      if (key[0] === 'B') {
+      if (key[0] === 'A') {
         const footerBtn = document.createElement('button');
         footerBtn.className = 'weather-btn';
-        footerBtn.style.backgroundImage = `url('${staticPrefix}pics/Team_${key[0]}_Weather.png')`;
+        footerBtn.style.backgroundImage = `url('${staticPrefix}pics/play_field/Team_${key[0]}_Weather.png')`;
         footerBtn.onclick = () => alert(`Clicked Weather ${weatherIndex} ${team}`);
         footer.appendChild(footerBtn);
       } else {
@@ -219,8 +99,13 @@
       mainCard.appendChild(footer);
       container.appendChild(mainCard);
     });
-  </script>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+
+    document.querySelectorAll('.team-button-img').forEach(button => {
+    button.addEventListener('click', () => {
+    const team = button.dataset.team;
+    const index = button.dataset.index;
+
+    alert(`You clicked button ${index} from Team ${team}`);
+    });
+    });

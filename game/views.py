@@ -30,6 +30,6 @@ def game(request):
 
     cards = [to_dict(c) for c in team_a + team_b]
 
-    return render(request, "game_2.html", {
+    return render(request, "game.html", {
         "cards": cards,
     })
