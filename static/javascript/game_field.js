@@ -12,14 +12,6 @@ const teamBSpecial = [...groupedCards.B.specials];
 const teamATrainer = [...groupedCards.A.trainer];
 const teamBTrainer = [...groupedCards.B.trainer];
 
-/*
-console.log('Team A Players:', teamAPlayers);
-console.log('Team B Players:', teamBPlayers);
-console.log('Team A Specials:', teamASpecial);
-console.log('Team B Specials:', teamBSpecial);
-console.log('Team A Trainers:', teamATrainer);
-console.log('Team B Trainers:', teamBTrainer);
-*/
 
 let remainingCards = [
   ...teamAPlayers,
@@ -27,8 +19,6 @@ let remainingCards = [
   ...teamASpecial,
   ...teamBSpecial
 ];
-
-console.log('Remaining Cards:', remainingCards);
 
 const grouped = {
   'A-defense': [], 'A-middle': [], 'A-attack': [],
@@ -222,7 +212,7 @@ function computerPlaysCard() {
     card.team === 'B' && (card.type === 'player' || card.type === 'special')
   );
 
-  console.log("🔵 Team B remaining cards:", teamBCardsLeft);
+  console.log("Team B remaining cards:", teamBCardsLeft);
 
   if (teamBCardsLeft.length === 0) {
     console.log("Team B is out of cards");
@@ -230,11 +220,11 @@ function computerPlaysCard() {
   }
 
   const chosen = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
-  console.log("🤖 Computer played:", chosen);
+  console.log("Computer played:", chosen);
 
   
   if (chosen.type === 'special') {
-    console.log(`🃏 Special card played by COMPUTER: ${chosen.name} (${chosen.role})`);
+    console.log(`Sspecial card played by COMPUTER: ${chosen.name} (${chosen.role})`);
 
     remainingCards = remainingCards.filter(c => c !== chosen);
     renderGameLayout();
@@ -242,17 +232,14 @@ function computerPlaysCard() {
     // ✅ Re-enable button for the user
     const chooseBtn = document.getElementById('chooseCardBtn');
     chooseBtn.disabled = false;
-
     return;
   }
 
-
-  // 🧍 Normal player card
   const key = `B-${chosen.role.toLowerCase()}`;
   if (grouped[key]) {
     grouped[key].push({ ...chosen, team: 'B' });
   } else {
-    console.warn(`⚠️ Unknown layout key: ${key}. Card not placed.`);
+    console.warn(`Unknown layout key: ${key}. Card not placed.`);
     return;
   }
 
@@ -267,8 +254,6 @@ function computerPlaysCard() {
 }
 
 
-
-// Entry point
 function initGame() {
   setupTeamButtons();
   setupChooseCardFlow();
