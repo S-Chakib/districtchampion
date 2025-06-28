@@ -14,10 +14,13 @@ def game(request):
     players_a, specials_a, trainer_a    = [to_dict(card, 'A') for card in players_a], [to_dict(card, 'A') for card in specials_a], [to_dict(card, 'A') for card in trainer_a]
     players_b, specials_b, trainer_b    = [to_dict(card, 'B') for card in players_b], [to_dict(card, 'B') for card in specials_b], [to_dict(card, 'B') for card in trainer_b]
 
+    print (specials_a)
     cards = {
         'A': {'players': players_a,'specials': specials_a,'trainer': trainer_a,},
         'B': {'players': players_b,'specials': specials_b,'trainer': trainer_b,},
     }
+
+    print (trainer_a)
 
     return render(request, "game.html", {
         "cards": cards,
@@ -38,7 +41,6 @@ def to_dict(card, team):
 
 def select_cards(player):
     cards = player.cards.all()
-    print (cards)
     all_players  = list(cards.filter(type='player'))
     all_specials = list(cards.filter(type='special'))
     all_trainers = list(cards.filter(type='trainer'))

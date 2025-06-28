@@ -21,7 +21,14 @@ console.log('Team A Trainers:', teamATrainer);
 console.log('Team B Trainers:', teamBTrainer);
 */
 
-let remainingCards = [...teamAPlayers, ...teamBPlayers];
+let remainingCards = [
+  ...teamAPlayers,
+  ...teamBPlayers,
+  ...teamASpecial,
+  ...teamBSpecial
+];
+
+console.log('Remaining Cards:', remainingCards);
 
 const grouped = {
   'A-defense': [], 'A-middle': [], 'A-attack': [],
@@ -139,7 +146,9 @@ function setupChooseCardFlow() {
     const modalBody = document.getElementById('modalBody');
     modalBody.innerHTML = "<h5>Select your card:</h5><hr>";
 
-    const myCards = remainingCards.filter(card => card.team === 'A');
+    const myCards = remainingCards.filter(card =>
+      card.team === 'A' && (card.type === 'player' || card.type === 'special')
+    );
 
     if (myCards.length === 0) {
       modalBody.innerHTML = "<p>No more cards to choose from.</p>";
@@ -152,10 +161,31 @@ function setupChooseCardFlow() {
       cardDiv.classList.add('selectable-card', 'mb-2', 'p-2', 'border', 'rounded');
       cardDiv.style.cursor = 'pointer';
       cardDiv.innerHTML = `
-        <strong>${card.name}</strong> – ${card.role}, ${card.points} points
+        <strong>${card.name}</strong>
+        <br><em>Type:</em> ${card.type}
+        <br><em>Role:</em> ${card.role}
+        <br><em>Points:</em> ${card.points}
       `;
 
       cardDiv.onclick = () => {
+        // 🃏 Special card: remove only
+        if (card.type === 'special') {
+          console.log(`🃏 Special card played by USER: ${card.name} (${card.role})`);
+
+          remainingCards = remainingCards.filter(c => c !== card);
+          chooseBtn.disabled = true;
+
+          bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
+          renderGameLayout();
+
+          setTimeout(() => {
+            computerPlaysCard();
+          }, 500);
+
+          return; // ❌ Do not place special card on the board
+        }
+
+        // 🧍 Normal player card
         const key = `A-${card.role.toLowerCase()}`;
         if (grouped[key]) {
           grouped[key].push({ ...card, team: 'A' });
@@ -186,32 +216,57 @@ function setupChooseCardFlow() {
   });
 }
 
+
 function computerPlaysCard() {
-  const teamBPlayersLeft = remainingCards.filter(card => card.team === 'B');
-  if (teamBPlayersLeft.length === 0) {
+  const teamBCardsLeft = remainingCards.filter(card =>
+    card.team === 'B' && (card.type === 'player' || card.type === 'special')
+  );
+
+  console.log("🔵 Team B remaining cards:", teamBCardsLeft);
+
+  if (teamBCardsLeft.length === 0) {
     console.log("Team B is out of cards");
     return;
   }
 
-  const chosen = teamBPlayersLeft[Math.floor(Math.random() * teamBPlayersLeft.length)];
-  const key = `B-${chosen.role.toLowerCase()}`;
+  const chosen = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
+  console.log("🤖 Computer played:", chosen);
 
+  
+  if (chosen.type === 'special') {
+    console.log(`🃏 Special card played by COMPUTER: ${chosen.name} (${chosen.role})`);
+
+    remainingCards = remainingCards.filter(c => c !== chosen);
+    renderGameLayout();
+
+    // ✅ Re-enable button for the user
+    const chooseBtn = document.getElementById('chooseCardBtn');
+    chooseBtn.disabled = false;
+
+    return;
+  }
+
+
+  // 🧍 Normal player card
+  const key = `B-${chosen.role.toLowerCase()}`;
   if (grouped[key]) {
     grouped[key].push({ ...chosen, team: 'B' });
   } else {
-    console.warn(`⚠️ Unknown key: ${key}. Role not mapped in layout.`);
+    console.warn(`⚠️ Unknown layout key: ${key}. Card not placed.`);
+    return;
   }
 
   remainingCards = remainingCards.filter(c => c !== chosen);
-
   renderGameLayout();
 
   const chooseBtn = document.getElementById('chooseCardBtn');
-  const teamAPlayersLeft = remainingCards.filter(card => card.team === 'A');
-  if (teamAPlayersLeft.length > 0) {
-    chooseBtn.disabled = false;
-  }
+  const teamAPlayableLeft = remainingCards.filter(card =>
+    card.team === 'A' && (card.type === 'player' || card.type === 'special')
+  );
+  chooseBtn.disabled = teamAPlayableLeft.length === 0;
 }
+
+
 
 // Entry point
 function initGame() {
