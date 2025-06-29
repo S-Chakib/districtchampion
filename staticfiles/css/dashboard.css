@@ -1,0 +1,18 @@
+body {
+  background: url('../pics/dashboard.gif') no-repeat center center fixed;
+  background-size: cover;
+}
+ 
+.hidden-ball-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24vh;
+    height: 24vh;
+    background-color: rgba(0, 68, 255, 0.713);  /* semi-transparent red */
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+}

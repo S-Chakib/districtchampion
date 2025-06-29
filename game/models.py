@@ -6,26 +6,21 @@ from django.core.exceptions import ValidationError
 # Create your models here.
 
 class Game(models.Model):
-    match_id = models.CharField(max_length=100, unique=True)
-    match_date = models.DateTimeField()
-    match_type = models.CharField(max_length=50)
-    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_1')
-    player2 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_2')
-    player1_score = models.IntegerField()
-    player2_score = models.IntegerField()
-    winner = models.CharField(max_length=100)
-    duration = models.DurationField()
+    match_id        = models.CharField(max_length=100, unique=True)
+    match_date      = models.DateTimeField()
+    match_type      = models.CharField(max_length=50)
+    player1         = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_1')
+    player2         = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_2')
+    player1_score   = models.IntegerField()
+    player2_score   = models.IntegerField()
+    winner          = models.CharField(max_length=100)
+    duration        = models.DurationField()
 
 
-TYPE_CHOICES = [
-    ('player', 'Player'),
-    ('trainer', 'Trainer'),
-    ('special', 'Special'),
-]
-
+TYPE_CHOICES            = [('player', 'Player'),('trainer', 'Trainer'),('special', 'Special')]
 PLAYER_PROP_1_CHOICES   = ['Attack', 'Defense', 'Middle']
 TRAINER_PROP_1_CHOICES  = ['Main', 'Assistant', 'Reserve']
-SPECIAL_PROP_1_CHOICES  = ['Red Card', 'Yellow Card', 'Weather', 'Injury', 'Substitution']
+SPECIAL_PROP_1_CHOICES  = ['Foul','Red Card', 'Yellow Card', 'Weather', 'Injury', 'Substitution']
 
 class Card(models.Model):
     card_id     = models.CharField(max_length=100, unique=True)
@@ -64,3 +59,12 @@ class Card(models.Model):
             return SPECIAL_PROP_1_CHOICES
         else:
             return []
+
+class PlayingCard(models.Model):
+    game        = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='playing_cards')
+    card        = models.ForeignKey(Card, on_delete=models.CASCADE)
+    player      = models.ForeignKey(Player, on_delete=models.CASCADE)
+    played_at   = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.card.name} played by {self.player.user.username} in game {self.game.match_id}"

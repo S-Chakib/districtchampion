@@ -100,7 +100,7 @@ function renderGameLayout() {
           <img src='${staticPrefix}${imagePath}' alt='Player Image' class='img-fluid rounded mb-3' style='height: 30vh; width: auto;'>
           <strong>Name:</strong> ${player.name}<br>
           <strong>Team:</strong> ${player.team}<br>
-          <strong>Role:</strong> ${player.role}<br>
+          <strong>p1:</strong> ${player.p1}<br>
           <strong>Type:</strong> ${player.type}<br>
           <strong>Points:</strong> ${player.points}`;
         const modal = new bootstrap.Modal(document.getElementById('playerModal'));
@@ -153,14 +153,13 @@ function setupChooseCardFlow() {
       cardDiv.innerHTML = `
         <strong>${card.name}</strong>
         <br><em>Type:</em> ${card.type}
-        <br><em>Role:</em> ${card.role}
+        <br><em>p1:</em> ${card.p1}
         <br><em>Points:</em> ${card.points}
       `;
 
       cardDiv.onclick = () => {
-        // 🃏 Special card: remove only
         if (card.type === 'special') {
-          console.log(`🃏 Special card played by USER: ${card.name} (${card.role})`);
+          console.log(`🃏 Special card played by USER: ${card.name} (${card.p1})`);
 
           remainingCards = remainingCards.filter(c => c !== card);
           chooseBtn.disabled = true;
@@ -172,16 +171,26 @@ function setupChooseCardFlow() {
             computerPlaysCard();
           }, 500);
 
-          return; // ❌ Do not place special card on the board
+          return; 
         }
 
         // 🧍 Normal player card
-        const key = `A-${card.role.toLowerCase()}`;
+        const key = `A-${card.p1.toLowerCase()}`;
         if (grouped[key]) {
           grouped[key].push({ ...card, team: 'A' });
         } else {
-          console.warn(`⚠️ Unknown key: ${key}. Role not mapped in layout.`);
+          console.warn(`⚠️ Unknown key: ${key}. p1 not mapped in layout.`);
         }
+
+
+        socket.send(JSON.stringify({
+          message: `${card.name} played by Team A`,
+          card: card,
+          team: 'A'
+        }));
+
+
+
 
         remainingCards = remainingCards.filter(c => c !== card);
         chooseBtn.disabled = true;
@@ -224,24 +233,33 @@ function computerPlaysCard() {
 
   
   if (chosen.type === 'special') {
-    console.log(`Sspecial card played by COMPUTER: ${chosen.name} (${chosen.role})`);
+    console.log(`Special card played by COMPUTER: ${chosen.name} (${chosen.p1})`);
 
     remainingCards = remainingCards.filter(c => c !== chosen);
     renderGameLayout();
 
-    // ✅ Re-enable button for the user
     const chooseBtn = document.getElementById('chooseCardBtn');
     chooseBtn.disabled = false;
     return;
   }
 
-  const key = `B-${chosen.role.toLowerCase()}`;
+  const key = `B-${chosen.p1.toLowerCase()}`;
   if (grouped[key]) {
     grouped[key].push({ ...chosen, team: 'B' });
+    
+    socket.send(JSON.stringify({
+      message: `${chosen.name} played by Team B`,
+      card: chosen,
+      team: 'B'
+    }));
+
   } else {
     console.warn(`Unknown layout key: ${key}. Card not placed.`);
     return;
-  }
+}
+
+
+  
 
   remainingCards = remainingCards.filter(c => c !== chosen);
   renderGameLayout();
@@ -261,3 +279,42 @@ function initGame() {
 }
 
 document.addEventListener('DOMContentLoaded', initGame);
+
+const protocol  = window.location.protocol === "https:" ? "wss" : "ws";
+const wsUrl     = `${protocol}://${window.location.host}/ws/game/${matchId}/`;
+const socket    = new WebSocket(wsUrl);
+
+socket.onmessage = function (event) {
+  const data = JSON.parse(event.data);
+  console.log("🔁 Message received via WebSocket:", data);
+
+  // A card was played (normal or special)
+  if (data.card && data.team) {
+    const key = `${data.team}-${data.card.p1.toLowerCase()}`;
+    if (grouped[key]) {
+      grouped[key].push(data.card);
+    }
+    renderGameLayout();
+  }
+
+  // 💥 Special card effect: +2 points to opposing team
+  if (data.effect === "add_points" && data.target_team) {
+    console.log(`✨ +${data.points} points to all ${data.target_team} cards`);
+
+    Object.entries(grouped).forEach(([key, cardList]) => {
+      if (key.startsWith(data.target_team)) {
+        cardList.forEach(card => {
+          card.points += data.points;
+        });
+      }
+    });
+
+    // ✅ Re-render the game layout with updated points
+    renderGameLayout();
+  }
+};
+
+
+
+socket.onopen = () => console.log("✅ WebSocket connection established");
+socket.onclose = () => console.warn("❌ WebSocket closed");
