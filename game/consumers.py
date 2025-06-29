@@ -1,4 +1,5 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
+from .game import game
 import json
 
 class GameConsumer(AsyncWebsocketConsumer):
@@ -23,6 +24,24 @@ class GameConsumer(AsyncWebsocketConsumer):
         card = data.get("card")
         team = data.get("team")
 
-        print(f"🃏 Card played by {team}: {card}")
+        # Ensure card is a dict, not None
+        if not isinstance(card, dict) or not team:
+            return
 
-        
+        process = game(card, team)  # Your game logic function
+
+        if process:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "remove_points_effect",  # triggers method below
+                    "points": 10,
+                }
+            )
+
+
+    async def remove_points_effect(self, event):
+        await super().send(text_data=json.dumps({
+            "action": "remove_points",
+            "points": event["points"]
+        }))

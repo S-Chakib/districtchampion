@@ -163,7 +163,7 @@ function setupChooseCardFlow() {
 
           remainingCards = remainingCards.filter(c => c !== card);
           chooseBtn.disabled = true;
-
+          sendCardPlayed(card, 'A');
           bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
           renderGameLayout();
 
@@ -183,16 +183,20 @@ function setupChooseCardFlow() {
         }
 
 
-        socket.send(JSON.stringify({
-          message: `${card.name} played by Team A`,
-          card: card,
-          team: 'A'
-        }));
-
+        sendCardPlayed(card, 'A');
+        console.log("Player played:", card);
 
 
 
         remainingCards = remainingCards.filter(c => c !== card);
+
+        const teamACardsLeft = remainingCards.filter(card =>
+          card.team === 'A' && (card.type === 'player' || card.type === 'special')
+        );
+        console.log("Player A remaining cards:", teamACardsLeft);
+
+
+        console.log("Player remaining cards:", teamACardsLeft);
         chooseBtn.disabled = true;
 
         bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
@@ -228,40 +232,30 @@ function computerPlaysCard() {
     return;
   }
 
-  const chosen = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
-  console.log("Computer played:", chosen);
+  const card = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
+  console.log("Computer played:", card);
 
-  
-  if (chosen.type === 'special') {
-    console.log(`Special card played by COMPUTER: ${chosen.name} (${chosen.p1})`);
+  if (card.type === 'special') {
+    console.log(`Special card played by COMPUTER: ${card.name} (${card.p1})`);
 
-    remainingCards = remainingCards.filter(c => c !== chosen);
+    remainingCards = remainingCards.filter(c => c !== card);
     renderGameLayout();
-
+    sendCardPlayed(card, 'B');
     const chooseBtn = document.getElementById('chooseCardBtn');
     chooseBtn.disabled = false;
     return;
   }
 
-  const key = `B-${chosen.p1.toLowerCase()}`;
+  const key = `B-${card.p1.toLowerCase()}`;
   if (grouped[key]) {
-    grouped[key].push({ ...chosen, team: 'B' });
-    
-    socket.send(JSON.stringify({
-      message: `${chosen.name} played by Team B`,
-      card: chosen,
-      team: 'B'
-    }));
-
+    grouped[key].push({ ...card, team: 'B' });
+    sendCardPlayed(card, 'B');
   } else {
     console.warn(`Unknown layout key: ${key}. Card not placed.`);
     return;
-}
+  }
 
-
-  
-
-  remainingCards = remainingCards.filter(c => c !== chosen);
+  remainingCards = remainingCards.filter(c => c !== card);
   renderGameLayout();
 
   const chooseBtn = document.getElementById('chooseCardBtn');
@@ -272,11 +266,23 @@ function computerPlaysCard() {
 }
 
 
+
 function initGame() {
   setupTeamButtons();
   setupChooseCardFlow();
   renderGameLayout();
 }
+
+function sendCardPlayed(card, team) {
+  socket.send(JSON.stringify({
+    game_id: matchId,          // ✅ already declared in template
+    message: `${card.name} played by Team ${team}`,
+    card: card,
+    team: team,
+  }));
+}
+
+
 
 document.addEventListener('DOMContentLoaded', initGame);
 
@@ -288,7 +294,6 @@ socket.onmessage = function (event) {
   const data = JSON.parse(event.data);
   console.log("🔁 Message received via WebSocket:", data);
 
-  // A card was played (normal or special)
   if (data.card && data.team) {
     const key = `${data.team}-${data.card.p1.toLowerCase()}`;
     if (grouped[key]) {
@@ -297,10 +302,8 @@ socket.onmessage = function (event) {
     renderGameLayout();
   }
 
-  // 💥 Special card effect: +2 points to opposing team
   if (data.effect === "add_points" && data.target_team) {
     console.log(`✨ +${data.points} points to all ${data.target_team} cards`);
-
     Object.entries(grouped).forEach(([key, cardList]) => {
       if (key.startsWith(data.target_team)) {
         cardList.forEach(card => {
@@ -308,13 +311,27 @@ socket.onmessage = function (event) {
         });
       }
     });
+    renderGameLayout();
+  }
 
-    // ✅ Re-render the game layout with updated points
+  if (data.action === "remove_points" && typeof data.points === "number") {
+    console.log(`💥 -${data.points} points to all placed cards`);
+    Object.values(grouped).forEach(cardList => {
+      cardList.forEach(card => {
+        card.points = Math.max(0, card.points - data.points);
+      });
+    });
+    renderGameLayout();
+  }
+
+  // ✅ THIS IS YOUR BLOCK THAT WAS MISPLACED
+  if (data.action === "update_from_backend" && data.grouped) {
+    Object.entries(data.grouped).forEach(([key, cards]) => {
+      grouped[key] = cards;
+    });
     renderGameLayout();
   }
 };
-
-
 
 socket.onopen = () => console.log("✅ WebSocket connection established");
 socket.onclose = () => console.warn("❌ WebSocket closed");

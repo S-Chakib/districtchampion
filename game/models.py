@@ -65,6 +65,8 @@ class PlayingCard(models.Model):
     card        = models.ForeignKey(Card, on_delete=models.CASCADE)
     player      = models.ForeignKey(Player, on_delete=models.CASCADE)
     played_at   = models.DateTimeField(auto_now_add=True)
+    points      = models.IntegerField(default=0)
+    team        = models.CharField(max_length=1, choices=[('A', 'Team A'), ('B', 'Team B')])
 
     def __str__(self):
         return f"{self.card.name} played by {self.player.user.username} in game {self.game.match_id}"
