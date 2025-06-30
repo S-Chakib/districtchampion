@@ -6,4 +6,6 @@ app_name = 'players'
 urlpatterns = [
     
     path('', views.user_cards, name='user_cards'),
+    
+
 ]
