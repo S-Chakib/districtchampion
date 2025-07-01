@@ -31,22 +31,24 @@ function fetchAndUpdateCards() {
     .then(data => {
       groupedCards = data;
 
+      // Reset grouped arrays
       Object.keys(grouped).forEach(key => grouped[key] = []);
       groupedCards.A.forEach(card => {
-        if (card.played) {
+        if (card.played) {  // Only place played cards in field
           const k = `A-${card.p1.toLowerCase()}`;
           if (grouped[k]) grouped[k].push(card);
         }
       });
       groupedCards.B.forEach(card => {
-        if (card.played) {
+        if (card.played) {  // Only place played cards in field
           const k = `B-${card.p1.toLowerCase()}`;
           if (grouped[k]) grouped[k].push(card);
         }
       });
 
-      const teamA = groupedCards.A.filter(c => ['player', 'special'].includes(c.type) && !c.played);
-      const teamB = groupedCards.B.filter(c => ['player', 'special'].includes(c.type) && !c.played);
+      // Update remainingCards
+      const teamA = groupedCards.A.filter(c => ['player', 'special'].includes(c.type));
+      const teamB = groupedCards.B.filter(c => ['player', 'special'].includes(c.type));
       remainingCards = [...teamA, ...teamB];
 
       renderGameLayout();
@@ -102,6 +104,8 @@ function setupChooseCardFlow() {
         sendCardPlayed(card, 'A');
         chooseBtn.disabled = true;
         bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
+
+        // Computer play is triggered on backend (or after fetching, if kept on frontend for delay)
         setTimeout(() => {
           computerPlaysCard();
         }, 500);
@@ -119,15 +123,14 @@ function renderGameLayout() {
   container.querySelectorAll('.main-card').forEach(el => el.remove());
 
   layout.forEach(key => {
-    const cardList = grouped[key] || [];
+    const cardList = grouped[key];
     const mainCard = document.createElement('div');
     mainCard.className = 'main-card';
     mainCard.style.left = positionMap[key];
 
-    const team = key.startsWith('A') ? 'A' : 'B';
-
     const header = document.createElement('div');
-    header.className = 'card-header p-0';
+    header.className = 'card-header';
+    header.textContent = key.toUpperCase().replace('-', ' - ');
 
     const body = document.createElement('div');
     body.className = 'card-body';
@@ -158,36 +161,18 @@ function renderGameLayout() {
     });
 
     const footer = document.createElement('div');
-    footer.className = 'card-footer p-0';
+    footer.className = 'card-footer';
+    footer.textContent = `${cardList.length} Player${cardList.length !== 1 ? 's' : ''}`;
 
-    const weatherBtn = document.createElement('button');
-    weatherBtn.className = 'weather-btn';
-    weatherBtn.style.backgroundImage = `url('${staticPrefix}pics/play_field/Team_${team}_Weather.png')`;
-    weatherBtn.onclick = () => {
-      alert(`🌦️ Team ${team} clicked on ${key.toUpperCase()}`);
-    };
-
-    if (team === 'A') {
-      footer.appendChild(weatherBtn);
-      mainCard.appendChild(header);
-    } else {
-      header.appendChild(weatherBtn);
-      mainCard.appendChild(header);
-    }
-
+    mainCard.appendChild(header);
     mainCard.appendChild(body);
-
-    if (team === 'A') {
-      mainCard.appendChild(footer);
-    } else {
-      mainCard.appendChild(footer);
-    }
-
+    mainCard.appendChild(footer);
     container.appendChild(mainCard);
   });
 }
 
 function computerPlaysCard() {
+  // Don't update grouped or points here, just send a message or let backend handle
   const teamBCardsLeft = remainingCards.filter(card =>
     card.team === 'B' && ['player', 'special'].includes(card.type)
   );
@@ -199,7 +184,7 @@ function computerPlaysCard() {
 
   const card = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
   sendCardPlayed(card, 'B');
-  console.log("🔍 Team B remaining cards:", teamBCardsLeft);
+  // Don't update UI here, will update after fetch from backend
 }
 
 function sendCardPlayed(card, team) {
@@ -210,6 +195,7 @@ function sendCardPlayed(card, team) {
     card: card,
     team: team,
   }));
+  // Fetch new state from backend as soon as card is played
   fetchAndUpdateCards();
 }
 
@@ -221,6 +207,7 @@ socket.onmessage = function (event) {
   const data = JSON.parse(event.data);
   console.log("🔁 Message received:", data);
 
+  // Any state change should cause a fresh fetch from backend
   if (
     (data.card && data.team) ||
     data.effect === "add_points" ||
@@ -233,4 +220,3 @@ socket.onmessage = function (event) {
 
 socket.onopen = () => console.log("✅ WebSocket open");
 socket.onclose = () => console.warn("❌ WebSocket closed");
-

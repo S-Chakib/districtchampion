@@ -1,4 +1,5 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import sync_to_async
 from .game import game
 import json
 
@@ -21,24 +22,27 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        card = data.get("card")
-        team = data.get("team")
+        print(f"Received data: {data}")  # Debugging line
 
-        # Ensure card is a dict, not None
-        if not isinstance(card, dict) or not team:
+        card_id = data.get("card_id")
+        team    = data.get("team")
+
+        # Ensure card_id and team are valid
+        if not card_id or not team:
+            print("❌ Invalid data received: Missing card_id or team")
             return
 
-        process = game(card, team)  # Your game logic function
+        # Process the game logic asynchronously
+        process = await sync_to_async(game)(card_id)
 
         if process:
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    "type": "remove_points_effect",  # triggers method below
+                    "type": "remove_points_effect", 
                     "points": 10,
                 }
             )
-
 
     async def remove_points_effect(self, event):
         await super().send(text_data=json.dumps({

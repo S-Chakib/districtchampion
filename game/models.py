@@ -67,6 +67,7 @@ class PlayingCard(models.Model):
     played_at   = models.DateTimeField(auto_now_add=True)
     points      = models.IntegerField(default=0)
     team        = models.CharField(max_length=1, choices=[('A', 'Team A'), ('B', 'Team B')])
+    played      = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.card.name} played by {self.player.user.username} in game {self.game.match_id}"

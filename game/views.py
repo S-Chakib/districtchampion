@@ -12,6 +12,11 @@ from .utils                         import select_cards, register_playing_cards
 
 @login_required
 def start_game(request):
+    ### TESTING PURPOSES ONLY ###
+    Game.objects.all().delete()  # Clear previous games for simplicity
+    PlayingCard.objects.all().delete()  # Clear previous playing cards
+    #############################
+
     player          = Player.objects.get(user=request.user)
     opponent_player = Player.objects.exclude(user=request.user).order_by('user__id').first()
 
@@ -42,20 +47,21 @@ def start_game(request):
 
 
 @login_required
-def get_game_cards(match_id):
+def get_game_cards(request, match_id):
     game        = Game.objects.get(match_id=match_id)
     cardsA      = PlayingCard.objects.filter(game=game, team='A').select_related('card')
     cardsB      = PlayingCard.objects.filter(game=game, team='B').select_related('card')
 
     def serialize_card(pc):
         return {
-            'id': pc.card.card_id,
+            'id': pc.id,
             'name': pc.card.name,
             'type': pc.card.type,
             'points': pc.points,
             'team': pc.team,
             'p1': pc.card.prop_1,
-            'pic': pc.card.picture_url or '/pics/standard.png'
+            'pic': pc.card.picture_url or '/pics/standard.png',
+            'played': pc.played,
         }
 
     return JsonResponse({
