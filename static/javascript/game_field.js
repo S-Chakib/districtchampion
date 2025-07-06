@@ -99,12 +99,16 @@ function setupChooseCardFlow() {
       `;
 
       cardDiv.onclick = () => {
-        sendCardPlayed(card, 'A');
-        chooseBtn.disabled = true;
-        bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
-        setTimeout(() => {
-          computerPlaysCard();
-        }, 500);
+        if (card.type === 'special') {
+          showAdversePlayerSelector(card, 'A');
+        } else {
+          sendCardPlayed(card, 'A');
+          chooseBtn.disabled = true;
+          bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
+          setTimeout(() => {
+            computerPlaysCard();
+          }, 500);
+        }
       };
 
       modalBody.appendChild(cardDiv);
@@ -198,20 +202,89 @@ function computerPlaysCard() {
   }
 
   const card = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
-  sendCardPlayed(card, 'B');
+  if (card.type === 'special') {
+    const adversePlayers = groupedCards['A'].filter(
+      card => card.type === 'player' && card.played
+    );
+    if (adversePlayers.length === 0) {
+      sendCardPlayed(card, 'B', []);
+      fetchAndUpdateCards(); // <--- ADD HERE
+      return;
+    }
+    const numTargets = Math.floor(Math.random() * adversePlayers.length) + 1;
+    const shuffled = adversePlayers.slice().sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, numTargets);
+    sendCardPlayed(card, 'B', selected);
+  } else {
+    sendCardPlayed(card, 'B');
+  }
+  fetchAndUpdateCards(); // <--- AND HERE
   console.log("🔍 Team B remaining cards:", teamBCardsLeft);
 }
 
-function sendCardPlayed(card, team) {
+function sendCardPlayed(card, team, targets=[]) {
   socket.send(JSON.stringify({
     game_id: matchId,
     card_id: card.id,
     message: `${card.name} played by Team ${team}`,
     card: card,
     team: team,
+    targets: targets.map(t => t.id), // send just the IDs or full objects as needed
   }));
   fetchAndUpdateCards();
 }
+
+function showAdversePlayerSelector(specialCard, team) {
+  const adverseTeam = team === 'A' ? 'B' : 'A';
+
+  // Only players currently on the field (played)
+  const adversePlayers = groupedCards[adverseTeam].filter(
+    card => card.type === 'player' && card.played
+  );
+
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = "<h5>Select one or more opponent's players:</h5><hr>";
+
+  adversePlayers.forEach(player => {
+    const playerDiv = document.createElement('div');
+    playerDiv.className = 'selectable-card mb-2 p-2 border rounded adverse-select';
+    playerDiv.style.cursor = 'pointer';
+    playerDiv.innerHTML = `
+      <strong>${player.name}</strong>
+      <span class="badge bg-secondary" style="float:right">Select</span>
+      <br><em>p1:</em> ${player.p1}<br><em>Points:</em> ${player.points}
+    `;
+    playerDiv.onclick = () => {
+      playerDiv.classList.toggle('selected');
+    };
+    modalBody.appendChild(playerDiv);
+  });
+
+  // Add submit button
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'btn btn-primary mt-2';
+  submitBtn.innerText = 'Confirm Selection';
+  submitBtn.onclick = () => {
+    const selectedElems = modalBody.querySelectorAll('.adverse-select.selected');
+    const selectedPlayers = Array.from(selectedElems).map(div => {
+      const name = div.querySelector('strong').innerText;
+      return adversePlayers.find(p => p.name === name);
+    });
+    if (selectedPlayers.length === 0) {
+      alert("Please select at least one player.");
+      return;
+    }
+    sendCardPlayed(specialCard, team, selectedPlayers);
+    chooseBtn.disabled = true;
+    bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
+    setTimeout(() => {
+      computerPlaysCard();
+    }, 500);
+  };
+  modalBody.appendChild(submitBtn);
+}
+
+
 
 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 const wsUrl = `${protocol}://${window.location.host}/ws/game/${matchId}/`;

@@ -24,8 +24,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         print(f"Received data: {data}")  # Debugging line
 
-        card_id = data.get("card_id")
-        team    = data.get("team")
+        card_id         = data.get("card_id")
+        team            = data.get("team")
+        target_players  = data.get("targets", [])
 
         # Ensure card_id and team are valid
         if not card_id or not team:
@@ -33,7 +34,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             return
 
         # Process the game logic asynchronously
-        process = await sync_to_async(game)(card_id)
+        process = await sync_to_async(game)(card_id, target_players)
 
         if process:
             await self.channel_layer.group_send(

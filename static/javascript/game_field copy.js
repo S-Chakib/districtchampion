@@ -25,25 +25,44 @@ const positionMap = {
   'B-defense': '85%',
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+function fetchAndUpdateCards() {
   fetch(`/game/${matchId}/cards/`)
     .then(response => response.json())
     .then(data => {
       groupedCards = data;
 
-      const teamA = groupedCards.A.filter(c => ['player', 'special'].includes(c.type));
-      const teamB = groupedCards.B.filter(c => ['player', 'special'].includes(c.type));
+      Object.keys(grouped).forEach(key => grouped[key] = []);
+      groupedCards.A.forEach(card => {
+        if (card.played) {
+          const k = `A-${card.p1.toLowerCase()}`;
+          if (grouped[k]) grouped[k].push(card);
+        }
+      });
+      groupedCards.B.forEach(card => {
+        if (card.played) {
+          const k = `B-${card.p1.toLowerCase()}`;
+          if (grouped[k]) grouped[k].push(card);
+        }
+      });
+
+      const teamA = groupedCards.A.filter(c => ['player', 'special'].includes(c.type) && !c.played);
+      const teamB = groupedCards.B.filter(c => ['player', 'special'].includes(c.type) && !c.played);
       remainingCards = [...teamA, ...teamB];
 
-      initGame();
+      renderGameLayout();
+      chooseBtn.disabled = !remainingCards.some(c => c.team === 'A' && (c.type === 'player' || c.type === 'special'));
     })
-    .catch(error => console.error("❌ Failed to load game cards:", error));
+    .catch(error => console.error("❌ Failed to fetch game cards:", error));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetchAndUpdateCards();
+  initGame();
 });
 
 function initGame() {
   setupTeamButtons();
   setupChooseCardFlow();
-  renderGameLayout();
 }
 
 function setupTeamButtons() {
@@ -59,7 +78,9 @@ function setupChooseCardFlow() {
     const modalBody = document.getElementById('modalBody');
     modalBody.innerHTML = "<h5>Select your card:</h5><hr>";
 
-    const myCards = remainingCards.filter(card => card.team === 'A' && ['player', 'special'].includes(card.type));
+    const myCards = remainingCards.filter(
+      card => card.team === 'A' && !card.played && ['player', 'special'].includes(card.type)
+    );
     if (myCards.length === 0) {
       modalBody.innerHTML = "<p>No more cards to choose from.</p>";
       chooseBtn.disabled = true;
@@ -78,20 +99,9 @@ function setupChooseCardFlow() {
       `;
 
       cardDiv.onclick = () => {
-        const key = `A-${card.p1.toLowerCase()}`;
-        if (card.type === 'special') {
-          console.log(`🃏 Special card played by USER: ${card.name} (${card.p1})`);
-        } else if (grouped[key]) {
-          grouped[key].push({ ...card, team: 'A' });
-        }
-
         sendCardPlayed(card, 'A');
-        remainingCards = remainingCards.filter(c => c !== card);
         chooseBtn.disabled = true;
-
         bootstrap.Modal.getInstance(document.getElementById('playerModal')).hide();
-        renderGameLayout();
-
         setTimeout(() => {
           computerPlaysCard();
         }, 500);
@@ -109,14 +119,15 @@ function renderGameLayout() {
   container.querySelectorAll('.main-card').forEach(el => el.remove());
 
   layout.forEach(key => {
-    const cardList = grouped[key];
+    const cardList = grouped[key] || [];
     const mainCard = document.createElement('div');
     mainCard.className = 'main-card';
     mainCard.style.left = positionMap[key];
 
+    const team = key.startsWith('A') ? 'A' : 'B';
+
     const header = document.createElement('div');
-    header.className = 'card-header';
-    header.textContent = key.toUpperCase().replace('-', ' - ');
+    header.className = 'card-header p-0';
 
     const body = document.createElement('div');
     body.className = 'card-body';
@@ -147,12 +158,31 @@ function renderGameLayout() {
     });
 
     const footer = document.createElement('div');
-    footer.className = 'card-footer';
-    footer.textContent = `${cardList.length} Player${cardList.length !== 1 ? 's' : ''}`;
+    footer.className = 'card-footer p-0';
 
-    mainCard.appendChild(header);
+    const weatherBtn = document.createElement('button');
+    weatherBtn.className = 'weather-btn';
+    weatherBtn.style.backgroundImage = `url('${staticPrefix}pics/play_field/Team_${team}_Weather.png')`;
+    weatherBtn.onclick = () => {
+      alert(`🌦️ Team ${team} clicked on ${key.toUpperCase()}`);
+    };
+
+    if (team === 'A') {
+      footer.appendChild(weatherBtn);
+      mainCard.appendChild(header);
+    } else {
+      header.appendChild(weatherBtn);
+      mainCard.appendChild(header);
+    }
+
     mainCard.appendChild(body);
-    mainCard.appendChild(footer);
+
+    if (team === 'A') {
+      mainCard.appendChild(footer);
+    } else {
+      mainCard.appendChild(footer);
+    }
+
     container.appendChild(mainCard);
   });
 }
@@ -168,32 +198,19 @@ function computerPlaysCard() {
   }
 
   const card = teamBCardsLeft[Math.floor(Math.random() * teamBCardsLeft.length)];
-  const key = `B-${card.p1.toLowerCase()}`;
-
-  if (card.type === 'special') {
-    console.log(`💥 Special card played by COMPUTER: ${card.name}`);
-  } else if (grouped[key]) {
-    grouped[key].push({ ...card, team: 'B' });
-  }
-
   sendCardPlayed(card, 'B');
-  remainingCards = remainingCards.filter(c => c !== card);
-
-  renderGameLayout();
-
-  const teamAPlayableLeft = remainingCards.filter(card =>
-    card.team === 'A' && ['player', 'special'].includes(card.type)
-  );
-  chooseBtn.disabled = teamAPlayableLeft.length === 0 ? true : false;
+  console.log("🔍 Team B remaining cards:", teamBCardsLeft);
 }
 
 function sendCardPlayed(card, team) {
   socket.send(JSON.stringify({
     game_id: matchId,
+    card_id: card.id,
     message: `${card.name} played by Team ${team}`,
     card: card,
     team: team,
   }));
+  fetchAndUpdateCards();
 }
 
 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -204,35 +221,13 @@ socket.onmessage = function (event) {
   const data = JSON.parse(event.data);
   console.log("🔁 Message received:", data);
 
-  if (data.card && data.team) {
-    const key = `${data.team}-${data.card.p1.toLowerCase()}`;
-    if (grouped[key]) {
-      grouped[key].push(data.card);
-      renderGameLayout();
-    }
-  }
-
-  if (data.effect === "add_points" && data.target_team) {
-    Object.entries(grouped).forEach(([key, cards]) => {
-      if (key.startsWith(data.target_team)) {
-        cards.forEach(card => card.points += data.points);
-      }
-    });
-    renderGameLayout();
-  }
-
-  if (data.action === "remove_points") {
-    Object.values(grouped).forEach(cards => {
-      cards.forEach(card => card.points = Math.max(0, card.points - data.points));
-    });
-    renderGameLayout();
-  }
-
-  if (data.action === "update_from_backend" && data.grouped) {
-    Object.entries(data.grouped).forEach(([key, cards]) => {
-      grouped[key] = cards;
-    });
-    renderGameLayout();
+  if (
+    (data.card && data.team) ||
+    data.effect === "add_points" ||
+    data.action === "remove_points" ||
+    data.action === "update_from_backend"
+  ) {
+    fetchAndUpdateCards();
   }
 };
 

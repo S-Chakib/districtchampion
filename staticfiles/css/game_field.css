@@ -116,5 +116,13 @@ body {
 }
 
 .team-b-buttons .team-button-img {
-  transform: rotate(90deg);
+  transform: rotate(100deg);
+}
+
+
+.selectable-card.selected,
+.adverse-select.selected {
+  background-color: #d0eaff !important;
+  border-color: #007bff !important;
+  color: #222 !important;
 }

@@ -118,3 +118,8 @@ body {
 .team-b-buttons .team-button-img {
   transform: rotate(90deg);
 }
+
+.selected {
+  background-color: #d0eaff;
+  border-color: #007bff;
+}
